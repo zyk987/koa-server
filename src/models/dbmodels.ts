@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import db from "../db";
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 //用户表
 const UserSchema = new Schema({
   //用户名
@@ -24,4 +24,6 @@ const UserSchema = new Schema({
   time: { type: Date },
 });
 
-export default db.model("User", UserSchema);
+const User = mongoose.model("User", UserSchema);
+
+export default { User };

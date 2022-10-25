@@ -1,10 +1,10 @@
-import { encryption, verification } from "./bcrypt";
-import { generateToken, verifyToken } from "./jwt";
-const dbmodel = require("../model/dbmodel");
-const User = dbmodel.model("User");
+import { encryption, verification } from "../utils/bcrypt";
+import { generateToken, verifyToken } from "../utils/jwt";
+import dbmodels from "../models/dbmodels";
+import { CallbackError } from "mongoose";
 
 // 注册用户
-const buildUser = function (name: string, mail: string, pwd: string, res: any) {
+const buildUser = async (name: string, mail: string, pwd: string) => {
   let password = encryption(pwd);
   let data = {
     name: name,
@@ -12,13 +12,14 @@ const buildUser = function (name: string, mail: string, pwd: string, res: any) {
     pwd: password,
     time: new Date(),
   };
-  let user = new User(data);
-
-  user.save(function (err: Error) {
+  let user = new dbmodels.User(data);
+  console.log(data);
+  await user.save(function (err: CallbackError) {
+    console.log(err);
     if (err) {
-      res.send({ status: 500, msg: "用户注册失败！" });
+      return { code: 500, msg: "用户注册失败！", data: null };
     } else {
-      res.send({ status: 200, msg: "用户注册成功！" });
+      return { code: 200, msg: "用户注册成功！", data: null };
     }
   });
 };
@@ -27,20 +28,23 @@ const buildUser = function (name: string, mail: string, pwd: string, res: any) {
 const countUserValue = function (data: any, type: string, res: any) {
   let wherestr: { [type: string]: any } = {};
   wherestr[type] = data;
-  User.countDocuments(wherestr, function (err: Error, result: string) {
-    if (err) {
-      res.status(500);
-    } else {
-      res.send({ status: 200, result });
+  dbmodels.User.countDocuments(
+    wherestr,
+    function (err: CallbackError, result: string) {
+      if (err) {
+        res.status(500);
+      } else {
+        res.send({ status: 200, result });
+      }
     }
-  });
+  );
 };
 
 // 用户验证
 const userMatch = function (data: any, pwd: string, res: any) {
   let wherestr = { $or: [{ name: data }, { email: data }] };
   let out = { name: 1, imgurl: 1, pwd: 1 };
-  User.find(wherestr, out, function (err: Error, result: any) {
+  dbmodels.User.find(wherestr, out, function (err: Error, result: any) {
     if (err) {
       res.send({ status: 500 });
     } else {
@@ -81,7 +85,7 @@ const searchUser = function (data: any, res: any) {
     email: 1,
     imgurl: 1,
   };
-  User.find(wherestr, out, function (err: Error, result: any) {
+  dbmodels.User.find(wherestr, out, function (err: CallbackError, result: any) {
     if (err) {
       res.send({ status: 500 });
     } else {
